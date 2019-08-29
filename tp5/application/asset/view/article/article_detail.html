@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+  <title>NOCICE</title>
+
+  <link rel="stylesheet" href="__CSS__/fontawesome/all.css">
+  <link rel="stylesheet" href="__CSS__/add_article_modal.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- HTML5 shim 和 Respond.js 是为了让 IE8 支持 HTML5 元素和媒体查询（media queries）功能 -->
+  <!-- 警告：通过 file:// 协议（就是直接将 html 页面拖拽到浏览器中）访问页面时 Respond.js 不起作用 -->
+  <!--[if lt IE 9]>
+      <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+    <![endif]-->
+
+
+  <script>
+    function change_page(target) {
+
+      var xmlhttp;
+
+      if (window.XMLHttpRequest)
+        xmlhttp = new XMLHttpRequest();
+      else
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+
+      xmlhttp.onreadystatechange = function () {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          document.getElementById("comments").innerHTML = xmlhttp.responseText;
+        }
+      }
+
+      xmlhttp.open("GET", "/asset/article?target={$article['id']}" + "&page=" + target.replace(/[^0-9]+/g, ''), true);
+      xmlhttp.send();
+
+    }
+
+
+
+  </script>
+
+  <style>
+    html {
+      height: 100%;
+    }
+
+    body {
+      padding-top: 50px;
+      height: 100%;
+
+    }
+
+    .container {
+      height: 100%;
+      overflow: visible;
+    }
+
+    #categories {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    #content a,
+    #content i {
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    #content i {
+      color: cornflowerblue;
+      font-size: 2em;
+    }
+
+    #thumbs-up:hover,
+    #thumbs-down:hover {
+      color: coral;
+      /* font-size: 2.5em; */
+    }
+
+    /* #footer {
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        } */
+  </style>
+
+</head>
+
+<body>
+  <div class="container">
+    {include file="fragment@index/nav_header" /}
+    {$top_left}
+    {include file="fragment@index/nav_center" /}
+    {$top_right}
+    {include file="fragment@index/nav_footer" /}
+
+
+
+    <div id="target" style="padding-top: 2%">
+
+
+      <div class="panel panel-info">
+        <div class="panel-heading">
+          <h3 class="panel-title">{$article['title']}</h3>
+        </div>
+
+
+
+
+        <div class="panel-body" dir="ltr" style="white-space: pre-wrap; font-size: 1.5em; word-break:break-all;">
+          {$article['content']}</div>
+
+        <div class="panel-footer" style="background-color: snow; border-width: 0px;">Written by <span
+            style="font-style: italic">{$article['author_id']}</span>, Update on
+          <?= substr($article['time'], 0, 10)?></div>
+      </div>
+
+      <nav aria-label="...">
+        <ul class="pager">
+          {$last_one}
+          {$next_one}
+        </ul>
+      </nav>
+
+      <div>
+        <h3>COMMENTS:</h3>
+        <div style="float: right" title="I'd like to leave a comment">
+          <a style="cursor: pointer;" data-toggle="modal" data-target="#leave_comment"><i style="font-size: 1.5em;"
+              class="far fa-comment-alt"></i></a>
+        </div>
+        <br>
+      </div>
+
+      {include file="fragment@index/leave_comment_modal" /}
+
+      <?php $comment_db = db('comment'); ?>
+
+      <div id="comments">
+        {volist name="comments" id="vo" empty="No comments yet"}
+        <div>{$vo['comment_author_id']}</div>
+        <div style="font-size: 1.5em">{$vo['content']}
+          <span style="font-weight: 100; font-size: 0.5em;">
+
+            <?php 
+          if ($vo['origin_comment_id']) 
+          {
+            $result = $comment_db -> where('id', $vo['origin_comment_id']) -> select(); 
+            if (count($result))
+            {
+
+              echo 'respond to: ';
+              echo $result[0]['content'];
+    
+              
+              
+            }
+            else
+            echo 'origin comment was deleted.';
+          }
+          ?>
+          
+          </span>
+
+        </div>
+        <div>{$vo['time']} <span style="white-space: pre"> </span> <a id="reply" data-toggle="modal"
+            data-target="#reply_to{$vo.id}" style="cursor:pointer"><i class="far fa-comment"></i> reply</a></div>
+        <br>
+        <!-- /////////////////////////////////////// -->
+        <div class="modal fade" id="reply_to{$vo.id}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+
+              <div class="modal-body">
+                <form action="/asset/comment/respond" method="POST">
+                  <input style="display: none" name="target" value="{$vo.id}">
+                  <div class="form-group">
+                    <label for="article_content">Reply to <span
+                        style="font-weight: 100; font-style: italic">{$vo['comment_author_id']}</span>:</label>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                    <textarea id="article_content" class="form-control" rows="8" wrap="virtual"
+                      placeholder=" The guy said: {$vo.content}" name="holyshit"></textarea>
+                  </div>
+
+
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                  <button type="button" class="btn btn-danger" data-dismiss="modal" style="float: right">Cancel</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /////////////////////////////////// -->
+        {/volist}
+        <div class="text-center">
+          {$comments->render('change_page')}
+        </div>
+      </div>
+
+    </div>
+
+
+
+  </div>
+
+  {include file="fragment@index/add_article_modal" /}
+
+
+
+
+  {include file="fragment@index/footer" /}

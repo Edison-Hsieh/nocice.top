@@ -1,0 +1,57 @@
+  {volist name="comments" id="vo" empty="No comments yet"}
+  <div>{$vo['comment_author_id']}</div>
+  <div style="font-size: 1.5em">{$vo['content']}
+    <span style="font-weight: 100; font-size: 0.5em;">
+
+      <?php 
+    if ($vo['origin_comment_id']) 
+    {
+      $result = $comment_db -> where('id', $vo['origin_comment_id']) -> select(); 
+      if (count($result))
+      {
+
+        echo 'respond to: ';
+        echo $result[0]['content'];
+
+        
+        
+      }
+      else
+      echo 'origin comment was deleted.';
+    }
+    ?>
+    
+    </span>
+
+  </div>
+  <div>{$vo['time']} <span style="white-space: pre"> </span> <a id="reply" data-toggle="modal"
+      data-target="#reply_to{$vo.id}" style="cursor:pointer"><i class="far fa-comment"></i> reply</a></div>
+  <br>
+  <!-- /////////////////////////////////////// -->
+  <div class="modal fade" id="reply_to{$vo.id}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form action="/asset/comment/respond" method="POST">
+            <input style="display: none" name="target" value="{$vo.id}">
+            <div class="form-group">
+              <label for="article_content">Reply to <span style="font-weight: 100; font-style: italic">{$vo['comment_author_id']}</span>:</label>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true">&times;</span></button>
+              <textarea id="article_content" class="form-control" rows="8" wrap="virtual"
+                placeholder="The guy said: {$vo.content}" name="holyshit"></textarea>
+            </div>
+
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal" style="float: right">Cancel</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- /////////////////////////////////// -->
+  {/volist}
+  <div class="text-center">
+    {$comments->render('change_page')}
+  </div>
